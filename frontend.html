@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prediction Result</title>
+    <title>Edge Nodes Status</title>
     <script src="https://cdn.socket.io/4.1.2/socket.io.min.js"></script>
 </head>
 <body>
-    <h1>Prediction Result</h1>
-    <div id="result"></div>
+    <h1>Edge Nodes Status</h1>
+    <div id="nodes-status"></div>
 
     <script>
         // Initialize Socket.IO client
@@ -19,17 +19,24 @@
             console.log("Connected to backend!");
         });
 
-        // Listen for 'prediction_result' event
-        socket.on('prediction_result', (response) => {
-            console.log('Prediction received:', response);
+        // Listen for 'all_edge_nodes_status' event
+        socket.on('all_edge_nodes_status', (status) => {
+            console.log('Updated status received:', status);
 
-            // Display the prediction result on the frontend
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = `
-                <p><strong>Host Name:</strong> ${response.host_name}</p>
-                <p><strong>Input Data:</strong> ${JSON.stringify(response.input_data)}</p>
-                <p><strong>Prediction:</strong> ${response.prediction}</p>
-            `;
+            // Display the status of all edge nodes
+            const statusDiv = document.getElementById('nodes-status');
+            statusDiv.innerHTML = '';  // Clear previous data
+
+            for (let node in status) {
+                const nodeData = status[node];
+                statusDiv.innerHTML += `
+                    <div style="border: 1px solid black; padding: 10px; margin: 10px;">
+                        <p><strong>Edge Node:</strong> ${node}</p>
+                        <p><strong>Input Data:</strong> ${JSON.stringify(nodeData.input_data)}</p>
+                        <p><strong>Prediction:</strong> ${nodeData.prediction}</p>
+                    </div>
+                `;
+            }
         });
 
         // Listen for 'error' event
