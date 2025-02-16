@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result</title>
+    <script src="https://cdn.socket.io/4.1.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Prediction Result</h1>
+    <div id="result"></div>
+
+    <script>
+        // Initialize Socket.IO client
+        const socket = io('http://localhost:5000');
+
+        // Listen for connection
+        socket.on('connect', () => {
+            console.log("Connected to backend!");
+        });
+
+        // Listen for 'prediction_result' event
+        socket.on('prediction_result', (response) => {
+            console.log('Prediction received:', response);
+
+            // Display the prediction result on the frontend
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <p><strong>Host Name:</strong> ${response.host_name}</p>
+                <p><strong>Input Data:</strong> ${JSON.stringify(response.input_data)}</p>
+                <p><strong>Prediction:</strong> ${response.prediction}</p>
+            `;
+        });
+
+        // Listen for 'error' event
+        socket.on('error', (error) => {
+            console.error('Error:', error);
+        });
+    </script>
+</body>
+</html>
