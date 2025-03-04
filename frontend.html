@@ -5,10 +5,100 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edge Nodes Status</title>
     <script src="https://cdn.socket.io/4.1.2/socket.io.min.js"></script>
+    <style>
+        /* General Page Styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #343a40;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive Container */
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Node Box Styling */
+        .node-box {
+            width: 70%;
+            max-width: 600px; /* Increased width for full screen */
+            min-width: 350px; /* Ensures minimum width on small screens */
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: left;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .node-box:hover {
+            transform: scale(1.02);
+            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Status-Based Background Colors */
+        .active {
+            background-color: #d4edda; /* Green for normal packets */
+            border: 2px solid #28a745;
+        }
+
+        .stopped {
+            background-color: #f8d7da; /* Red for stopped nodes */
+            border: 2px solid #dc3545;
+        }
+
+        .malicious {
+            background-color: #fff3cd; /* Orange for malicious packets */
+            border: 2px solid #ffc107;
+        }
+
+        /* Key Labels */
+        .label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        /* Responsive Text Overflow Prevention */
+        .data-container {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-size: 14px;
+            color: #212529;
+            background: #fff;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 5px;
+            white-space: pre-wrap;
+        }
+
+        /* Status Icons */
+        .status-icon {
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        /* Responsive Layout */
+        @media (max-width: 800px) {
+            .node-box {
+                width: 90%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Edge Nodes Status</h1>
-    <div id="nodes-status"></div>
+    <h1>🔍 Edge Nodes Status</h1>
+    <div id="nodes-status" class="node-container"></div>
 
     <script>
         // Initialize Socket.IO client
@@ -16,32 +106,48 @@
 
         // Listen for connection
         socket.on('connect', () => {
-            console.log("Connected to backend!");
+            console.log("✅ Connected to backend!");
         });
 
         // Listen for 'all_edge_nodes_status' event
         socket.on('all_edge_nodes_status', (status) => {
-            console.log('Updated status received:', status);
+            console.log('🔄 Updated status received:', status);
 
-            // Display the status of all edge nodes
             const statusDiv = document.getElementById('nodes-status');
-            statusDiv.innerHTML = '';  // Clear previous data
+            statusDiv.innerHTML = '';  // Clear previous content
 
-            for (let node in status) {
+            // ✅ Display active, malicious, & stopped nodes in a responsive way
+            Object.keys(status).forEach(node => {
                 const nodeData = status[node];
-                statusDiv.innerHTML += `
-                    <div style="border: 1px solid black; padding: 10px; margin: 10px;">
-                        <p><strong>Edge Node:</strong> ${node}</p>
-                        <p><strong>Input Data:</strong> ${JSON.stringify(nodeData.input_data)}</p>
-                        <p><strong>Prediction:</strong> ${nodeData.prediction}</p>
+                const isStopped = nodeData.status === "stopped";
+                const isMalicious = nodeData.prediction === "malicious packet";
+
+                // Set the appropriate class based on node status
+                let nodeClass = isStopped ? "stopped" : isMalicious ? "malicious" : "active";
+
+                const nodeElement = document.createElement('div');
+                nodeElement.classList.add('node-box', nodeClass);
+
+                nodeElement.innerHTML = `
+                    <p class="label"><strong>🖥️ Edge Node:</strong> ${node}</p>
+                    <p class="label">📊 Input Data:</p>
+                    <div class="data-container">
+                        <pre>${JSON.stringify(nodeData.input_data, null, 2)}</pre>
                     </div>
+                    <p class="label">🔍 Prediction: <strong>${nodeData.prediction}</strong></p>
+                    <p class="label">📡 Status: <span class="status-icon">${isStopped ? '🛑 Stopped' : isMalicious ? '⚠️ Malicious' : '✅ Active'}</span></p>
                 `;
+                statusDiv.appendChild(nodeElement);
+            });
+
+            if (Object.keys(status).length === 0) {
+                statusDiv.innerHTML = "<p>No active edge nodes detected.</p>";
             }
         });
 
         // Listen for 'error' event
         socket.on('error', (error) => {
-            console.error('Error:', error);
+            console.error('❌ Error:', error);
         });
     </script>
 </body>
